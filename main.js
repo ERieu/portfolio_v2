@@ -17,3 +17,15 @@ document.addEventListener('DOMContentLoaded', function() {
     loadComponent('header.html', 'header');
     loadComponent('footer.html', 'footer');
 });
+
+// Fonction pour ajouter un fond au header lors du défilement
+window.addEventListener('scroll', function() {
+    const header = document.querySelector('header.navbar');
+    if (header) {
+        if (window.scrollY > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    }
+});
