@@ -61,6 +61,8 @@ window.addEventListener('scroll', function() {
 
 document.addEventListener('DOMContentLoaded', function() {
     const timelinePoints = document.querySelectorAll('.timeline-point');
+    const timelineMiniPoints = document.querySelectorAll('.timeline-point-mini');
+    const allPoints = [...document.querySelectorAll('.timeline-point, .timeline-point-mini')];
     const timelineCards = document.querySelectorAll('.timeline-card');
     const prevArrow = document.querySelector('.prev-arrow');
     const nextArrow = document.querySelector('.next-arrow');
@@ -69,31 +71,72 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentIndex = 0;
     
     function updateTimeline(index) {
+      // Mise à jour des points principaux
       timelinePoints.forEach((point, i) => {
-        point.classList.toggle('active', i === index);
+        point.classList.toggle('active', getMainPointIndex(index) === i);
       });
       
-      timelineCards.forEach((card, i) => {
-        card.classList.toggle('active', i === index);
+      // Mise à jour des mini points
+      timelineMiniPoints.forEach((point, i) => {
+        const miniPointIndex = timelinePoints.length + i;
+        point.classList.toggle('active', index === miniPointIndex);
       });
       
-      progressLine.style.width = `${index * 50}%`;
+      // Mise à jour des cartes (uniquement pour les points principaux)
+      if (isMainPoint(index)) {
+        timelineCards.forEach((card, i) => {
+          card.classList.toggle('active', getMainPointIndex(index) === i);
+        });
+      }
       
+      // Mise à jour de la ligne de progression (25% par mini-point)
+      const progressPercentage = (index / (allPoints.length - 1)) * 100;
+      progressLine.style.width = `${progressPercentage}%`;
+      
+      // Activation/désactivation des flèches
       prevArrow.disabled = index === 0;
-      nextArrow.disabled = index === timelinePoints.length - 1;
+      nextArrow.disabled = index === allPoints.length - 1;
       
       currentIndex = index;
     }
     
-    timelinePoints.forEach((point, index) => {
-      point.addEventListener('click', () => updateTimeline(index));
+    // Fonction pour vérifier si l'index correspond à un point principal
+    function isMainPoint(index) {
+      return index < timelinePoints.length || index % 2 === 0;
+    }
+    
+    // Fonction pour obtenir l'index du point principal correspondant
+    function getMainPointIndex(index) {
+      if (index < timelinePoints.length) return index;
+      // Pour les mini-points, déterminer à quel point principal ils sont associés
+      return Math.floor(index / 2);
+    }
+    
+    // Ajout d'écouteurs d'événements pour tous les points
+    allPoints.forEach((point, index) => {
+      point.addEventListener('click', () => {
+        updateTimeline(index);
+        
+        // Si c'est un mini-point, afficher la carte du point principal le plus proche
+        if (!isMainPoint(index)) {
+          const mainPointIndex = index < timelinePoints.length ? index : Math.ceil(index / 2);
+          
+          timelineCards.forEach((card, i) => {
+            card.classList.toggle('active', i === mainPointIndex);
+          });
+        }
+      });
     });
     
+    // Gestion des flèches
     prevArrow.addEventListener('click', () => {
       if (currentIndex > 0) updateTimeline(currentIndex - 1);
     });
     
     nextArrow.addEventListener('click', () => {
-      if (currentIndex < timelinePoints.length - 1) updateTimeline(currentIndex + 1);
+      if (currentIndex < allPoints.length - 1) updateTimeline(currentIndex + 1);
     });
-  });
+    
+    // Initialisation
+    updateTimeline(0);
+});
