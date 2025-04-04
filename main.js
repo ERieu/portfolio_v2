@@ -58,3 +58,42 @@ window.addEventListener('scroll', function() {
         }
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const timelinePoints = document.querySelectorAll('.timeline-point');
+    const timelineCards = document.querySelectorAll('.timeline-card');
+    const prevArrow = document.querySelector('.prev-arrow');
+    const nextArrow = document.querySelector('.next-arrow');
+    const progressLine = document.querySelector('.progress-line');
+    
+    let currentIndex = 0;
+    
+    function updateTimeline(index) {
+      timelinePoints.forEach((point, i) => {
+        point.classList.toggle('active', i === index);
+      });
+      
+      timelineCards.forEach((card, i) => {
+        card.classList.toggle('active', i === index);
+      });
+      
+      progressLine.style.width = `${index * 50}%`;
+      
+      prevArrow.disabled = index === 0;
+      nextArrow.disabled = index === timelinePoints.length - 1;
+      
+      currentIndex = index;
+    }
+    
+    timelinePoints.forEach((point, index) => {
+      point.addEventListener('click', () => updateTimeline(index));
+    });
+    
+    prevArrow.addEventListener('click', () => {
+      if (currentIndex > 0) updateTimeline(currentIndex - 1);
+    });
+    
+    nextArrow.addEventListener('click', () => {
+      if (currentIndex < timelinePoints.length - 1) updateTimeline(currentIndex + 1);
+    });
+  });
