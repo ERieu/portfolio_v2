@@ -59,10 +59,11 @@ window.addEventListener('scroll', function() {
     }
 });
 
+// 1. Correction du JavaScript pour les points-mini
 document.addEventListener('DOMContentLoaded', function() {
     const timelinePoints = document.querySelectorAll('.timeline-point');
     const timelineMiniPoints = document.querySelectorAll('.timeline-point-mini');
-    const allPoints = [...document.querySelectorAll('.timeline-point, .timeline-point-mini')];
+    const allPoints = [...timelinePoints, ...timelineMiniPoints]; // Ordre correct des points
     const timelineCards = document.querySelectorAll('.timeline-card');
     const prevArrow = document.querySelector('.prev-arrow');
     const nextArrow = document.querySelector('.next-arrow');
@@ -71,26 +72,34 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentIndex = 0;
     
     function updateTimeline(index) {
-      // Mise à jour des points principaux
-      timelinePoints.forEach((point, i) => {
-        point.classList.toggle('active', getMainPointIndex(index) === i);
-      });
+      // Désactiver tous les points
+      allPoints.forEach(point => point.classList.remove('active'));
       
-      // Mise à jour des mini points
-      timelineMiniPoints.forEach((point, i) => {
-        const miniPointIndex = timelinePoints.length + i;
-        point.classList.toggle('active', index === miniPointIndex);
-      });
+      // Activer uniquement le point actuel
+      allPoints[index].classList.add('active');
       
       // Mise à jour des cartes (uniquement pour les points principaux)
-      if (isMainPoint(index)) {
-        timelineCards.forEach((card, i) => {
-          card.classList.toggle('active', getMainPointIndex(index) === i);
+      const selectedPoint = allPoints[index];
+      const isMainPoint = selectedPoint.classList.contains('timeline-point');
+      
+      if (isMainPoint) {
+        const dataYear = selectedPoint.getAttribute('data-year');
+        timelineCards.forEach(card => {
+          card.classList.toggle('active', card.getAttribute('data-year') === dataYear);
+        });
+      } else {
+        // Pour les mini-points, on trouve la carte la plus proche
+        const dataMonth = selectedPoint.getAttribute('data-month');
+        const [month, year] = dataMonth.split('-');
+        timelineCards.forEach(card => {
+          card.classList.toggle('active', card.getAttribute('data-year') === year);
         });
       }
       
-      // Mise à jour de la ligne de progression (25% par mini-point)
-      const progressPercentage = (index / (allPoints.length - 1)) * 100;
+      // Mise à jour de la ligne de progression
+      const pointPosition = parseFloat(getComputedStyle(allPoints[index]).left);
+      const trackWidth = parseFloat(getComputedStyle(document.querySelector('.timeline-track')).width);
+      const progressPercentage = (pointPosition / trackWidth) * 100;
       progressLine.style.width = `${progressPercentage}%`;
       
       // Activation/désactivation des flèches
@@ -100,31 +109,10 @@ document.addEventListener('DOMContentLoaded', function() {
       currentIndex = index;
     }
     
-    // Fonction pour vérifier si l'index correspond à un point principal
-    function isMainPoint(index) {
-      return index < timelinePoints.length || index % 2 === 0;
-    }
-    
-    // Fonction pour obtenir l'index du point principal correspondant
-    function getMainPointIndex(index) {
-      if (index < timelinePoints.length) return index;
-      // Pour les mini-points, déterminer à quel point principal ils sont associés
-      return Math.floor(index / 2);
-    }
-    
     // Ajout d'écouteurs d'événements pour tous les points
     allPoints.forEach((point, index) => {
       point.addEventListener('click', () => {
         updateTimeline(index);
-        
-        // Si c'est un mini-point, afficher la carte du point principal le plus proche
-        if (!isMainPoint(index)) {
-          const mainPointIndex = index < timelinePoints.length ? index : Math.ceil(index / 2);
-          
-          timelineCards.forEach((card, i) => {
-            card.classList.toggle('active', i === mainPointIndex);
-          });
-        }
       });
     });
     
